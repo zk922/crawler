@@ -1,0 +1,13 @@
+{
+  "name": "crawler",
+  "version": "1.0.0",
+  "description": "crawler for everything",
+  "main": "main.ts",
+  "repository": "https://github.com/zk922/crawler.git",
+  "author": "zk922",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "crawler": "^1.2.0"
+  }
+}
