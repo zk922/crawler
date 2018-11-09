@@ -1,7 +1,6 @@
 const Crawler = require('crawler');
-
-
-export function crawler(ctx, next) {
+const fs = require('fs');
+function crawler(ctx, next) {
 
   let c = new Crawler({
     maxConnections : 10,
@@ -9,6 +8,7 @@ export function crawler(ctx, next) {
     callback : function (error, res, done) {
       if(error){
         console.log(error);
+        return;
       }else{
         let $ = res.$;
         // $ is Cheerio by default
@@ -19,8 +19,22 @@ export function crawler(ctx, next) {
     }
   });
 
-  c.queue()
+  c.queue({
+    uri: 'http://www.zk922.com',
+    callback: function (error, res, done) {
+      if(error){
+        done();
+        return;
+      }
+      let $ = res.$;
+      console.log($("title").text());
+      done();
+    }
+  })
 
 
 
 }
+module.export = crawler;
+
+crawler();
