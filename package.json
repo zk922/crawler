@@ -2,12 +2,22 @@
   "name": "crawler",
   "version": "1.0.0",
   "description": "crawler for everything",
-  "main": "main.ts",
+  "main": "src/index.js",
   "repository": "https://github.com/zk922/crawler.git",
   "author": "zk922",
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "crawler": "^1.2.0"
+    "crawler": "^1.2.0",
+    "koa": "^2.6.1",
+    "koa-bodyparser": "^4.2.1",
+    "koa-router": "^7.4.0",
+    "koa-static": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.0.46",
+    "@types/koa-bodyparser": "^5.0.1",
+    "@types/koa-router": "^7.0.33",
+    "@types/koa-static": "^4.0.0"
   }
 }
