@@ -1,7 +1,11 @@
+const {serverConfig} = require('../config');
+
 const Koa = require('koa');
 const koaBodyparser = require('koa-bodyparser');
 const koaStatic = require('koa-static');
 const router = require('./router');
+
+
 
 let app = new Koa();
 
@@ -17,7 +21,6 @@ app.use(koaStatic(__dirname + '/../www',  {
 app.use(router.routes());
 
 
-let port = 8300;
-app.listen( port, function () {
-  console.log('server is running at port 8300');
+app.listen( serverConfig.port, function () {
+  console.log(`server is running at port ${serverConfig.port}`);
 });
