@@ -96,7 +96,7 @@ function getCityLoupanTotal(city){
 
 /**
  * 获取某一页房产数据
- * @description 链家限制显示只有3000个。新房数量不会过多，所以直接扒取就可以。二手房有的城市会有区域超过3000，需要分区域扒取
+ * @description 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
  * @param {string} city     城市的简写别名
  * @param {number} page     第几页，1开始
  * @return {Promise<{result: number, msg: string, data: ?}>}
