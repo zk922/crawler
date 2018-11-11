@@ -3,6 +3,7 @@ const Crawler = require('crawler');
 module.exports = function createCrawler(maxConnection = 10){
   return new Crawler({
     maxConnections : maxConnection,
+    retries: 0,
     // This will be called for each crawled page
     callback : function (error, res, done) {
       if(error){
