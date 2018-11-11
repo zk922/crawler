@@ -53,6 +53,9 @@ module.exports = async function getLianjiaLoupan(ctx, next) {
       }
       else{
         sendData += `共${total}套\n`;
+
+        //TODO 需要对超过100页的房源按区域抓取。
+
         for(let i=0; i*10<total; i++){
 
           let listData;
@@ -66,7 +69,7 @@ module.exports = async function getLianjiaLoupan(ctx, next) {
           console.log(`${v.cityName}(${v.alias})第${listData.page}页获取成功`);
           let str = `第${listData.page}页：\n`;
           listData.list.forEach(v=>{
-            str += `   ${v.address}     ${v.show_price_info}\n`
+            str += `   ${v.address}     ${v.show_price_info}\n`;
           });
           sendData += str;
         }
