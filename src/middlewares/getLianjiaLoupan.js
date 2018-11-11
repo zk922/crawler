@@ -53,6 +53,9 @@ module.exports = async function getLianjiaLoupan(ctx, next) {
       }
       else{
         sendData += `共${total}套\n`;
+
+        //TODO 需要对超过100页的房源按区域抓取。
+
         for(let i=0; i*10<total; i++){
 
           let listData;
