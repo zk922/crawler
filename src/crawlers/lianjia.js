@@ -180,7 +180,6 @@ function getDistrictSection(city) {
   });
 }
 
-
 /**
  * 获取城市city的大行政区域，东城区，西城区之类
  * @deprecated   可以直接用上面方法获取所有大小区域信息
@@ -228,9 +227,6 @@ function getCityDistrict(city) {
     })
   });
 }
-
-
-
 
 
 
