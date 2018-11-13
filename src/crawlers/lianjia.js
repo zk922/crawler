@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { cityUrl } = require('../urls/lianjiaUrl');
 const createCrawler = require('./crawler');
 
@@ -49,8 +48,7 @@ function getLianjiaCities(){
 }
 
 /**
- * 获取指定城市新楼盘的总数
- * 获取city的新楼盘total
+ * 获取指定城市新楼盘的总数,获取city的新楼盘total
  * @param {string} city    城市的简写别名，用来获取城市连接
  * @return {Promise<{result: number, msg: string, data: ?}>}
  * **/
@@ -97,7 +95,7 @@ function getCityLoupanTotal(city){
  * @param {string} city     城市的简写别名
  * @param {number} page     第几页，1开始
  * @param {string} section  区域，可选
- * @return {Promise<{result: number, msg: string, data: ?}>}
+ * @return {Promise<{result: number, msg: string, data: ?}>}    响应成功后楼盘的信息
  * **/
 function getCityLoupanPerpage(city, page, section){
   let _this = this;
@@ -243,5 +241,3 @@ LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 module.exports = LianjiaCrawler;
-
-
