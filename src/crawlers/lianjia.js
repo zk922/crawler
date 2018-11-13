@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { cityUrl } = require('../urls/lianjiaUrl');
 const createCrawler = require('./crawler');
 
@@ -49,8 +48,7 @@ function getLianjiaCities(){
 }
 
 /**
- * 获取指定城市新楼盘的总数
- * 获取city的新楼盘total
+ * 获取指定城市新楼盘的总数,获取city的新楼盘total
  * @param {string} city    城市的简写别名，用来获取城市连接
  * @return {Promise<{result: number, msg: string, data: ?}>}
  * **/
@@ -68,14 +66,11 @@ function getCityLoupanTotal(city){
           return;
         }
 
-
         if(res.statusCode !== 200){
           reject({msg: `获取${city}的楼盘总数失败, 请求可能重定向`, result: 2, data: error});
           done();
           return;
         }
-
-
 
         let result;
         try{
@@ -96,38 +91,142 @@ function getCityLoupanTotal(city){
 
 /**
  * 获取某一页房产数据
- * @description 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
+ * 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
  * @param {string} city     城市的简写别名
  * @param {number} page     第几页，1开始
- * @return {Promise<{result: number, msg: string, data: ?}>}
+ * @param {string} section  区域，可选
+ * @return {Promise<{result: number, msg: string, data: ?}>}    响应成功后楼盘的信息
  * **/
-function getCityLoupanPerpage(city, page){
+function getCityLoupanPerpage(city, page, section){
   let _this = this;
   return new Promise(function (resolve, reject) {
     _this.c.queue({
-      uri: `https://${city}.fang.lianjia.com/loupan/pg${page}/?_t=1`,
+      uri: `https://${city}.fang.lianjia.com/loupan${section ? '/' + section : ''}/pg${page}/?_t=1`,
       jQuery: false,
       callback: function (error, res, done) {
         if(error){
           console.log(error);
           done();
-          reject({msg: `获取${city}的第${page}页楼盘失败`, result: 1, data: error});
+          reject({msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘失败`, result: 1, data: error});
           return;
         }
-
-        let list;
-        if(page<=100){
-          list = JSON.parse(res.body).data.list;
-        }
-        else{
-          list = JSON.parse(res.body).data.no_result_resblocks;
-        }
-        resolve({result: 0, msg: `获取${city}的第${page}页楼盘成功`, data: {page: page, list: list, city: city}});
+        let list = JSON.parse(res.body).data.list;
+        resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, list: list, city: city}});
         done();
       }
     })
   });
 }
+
+/**
+ * 获取某个城市city的新房的行政分区+再细分区域
+ * @description     仅需要在获取到某个城市新房房源超过100页时候调用，即超过1000个新房
+ * @param {string} city       城市简写别名
+ * @return {Promise<{
+ *   result: number,
+ *   msg: string,
+ *   data: {
+ *     city: string,
+ *     district: Array<{
+ *        districtName: string,
+ *        districtAlias: string,
+ *        section: {sectionName: string, sectionAlias: string}[]
+ *     }>}
+ *    }
+ *  >}
+ * **/
+function getDistrictSection(city) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.fang.lianjia.com/loupan/`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+        let itemList = $('.district-item');
+        let result = {
+          city: city,
+          district: []
+        };
+        itemList.each(function (i) {
+
+          let districtDetail = {
+            districtName: $(this).text(),
+            districtAlias: $(this).attr('data-district-spell'),
+            section: []
+          };
+
+          let sectionList = $(`.bizcircle-item[data-district-id="${$(this).attr('data-district-id')}"]`);
+          sectionList.each(function (i) {
+            districtDetail.section.push({
+              sectionName: $('.bizcircle-item-name', this).text(),
+              sectionAlias: $(this).attr('data-bizcircle-spell')
+            });
+          });
+
+          result.district.push(districtDetail);
+        });
+        resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
+        done();
+      }
+    })
+  });
+}
+
+/**
+ * 获取城市city的大行政区域，东城区，西城区之类
+ * @deprecated   可以直接用上面方法获取所有大小区域信息
+ * @param {string}city  城市别名
+ * @return {Promise<{
+ *   result: number,
+ *   msg: string,
+ *   data: {
+ *     city: string,
+ *     district: Array<{
+ *        districtName: string,
+ *        districtAlias: string
+ *     }>}
+ *    }
+ *  >}
+ * **/
+function getCityDistrict(city) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.fang.lianjia.com/loupan/`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+        let itemList = $('.district-item');
+        let result = {
+          city: city,
+          district: []
+        };
+        itemList.each(function (i) {
+          // console.log(this);
+          result.district.push({
+            districtName: $(this).text(),
+            districtAlias: $(this).attr('data-district-spell')
+          })
+        });
+        resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
+        done();
+      }
+    })
+  });
+}
+
+
 
 /**
  * 导出的链家爬虫类
@@ -137,11 +236,8 @@ function LianjiaCrawler() {
   this.c = createCrawler()
 }
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
-
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
-
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
+LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 module.exports = LianjiaCrawler;
-
-
