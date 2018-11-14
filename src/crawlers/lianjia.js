@@ -50,13 +50,14 @@ function getLianjiaCities(){
 /**
  * 获取指定城市新楼盘的总数,获取city的新楼盘total
  * @param {string} city    城市的简写别名，用来获取城市连接
+ * @param {string=}section  区域
  * @return {Promise<{result: number, msg: string, data: ?}>}
  * **/
-function getCityLoupanTotal(city){
+function getCityLoupanTotal(city, section=undefined){
   let _this = this;
   return new Promise(function (resolve, reject) {
     _this.c.queue({//获取总数
-      uri: `https://${city}.fang.lianjia.com/loupan/pg1/?_t=1`,
+      uri: `https://${city}.fang.lianjia.com/loupan${section ? '/' + section : ''}/pg1/?_t=1`,
       jQuery: false,
       callback: function (error, res, done) {
         if(error){
@@ -94,10 +95,10 @@ function getCityLoupanTotal(city){
  * 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
  * @param {string} city     城市的简写别名
  * @param {number} page     第几页，1开始
- * @param {string} section  区域，可选
+ * @param {string=} section  区域，可选
  * @return {Promise<{result: number, msg: string, data: ?}>}    响应成功后楼盘的信息
  * **/
-function getCityLoupanPerpage(city, page, section){
+function getCityLoupanPerpage(city, page, section=undefined){
   let _this = this;
   return new Promise(function (resolve, reject) {
     _this.c.queue({
