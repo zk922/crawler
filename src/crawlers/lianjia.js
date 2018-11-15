@@ -229,6 +229,43 @@ function getCityDistrict(city) {
 
 
 
+
+/**
+ * 获取链家二手房某个城市的分区列表
+ * @param {string} city
+ * @return {Promise<*>}
+ * **/
+function getErshoufangDistrict(city) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.lianjia.com/ershoufang/`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+
+        let result = {
+          city: city,
+          district: []
+        };
+
+        //todo 分析页面，抓取district数据
+
+        resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
+        done();
+      }
+    })
+  });
+}
+
+
+
+
 /**
  * 导出的链家爬虫类
  * @constructor
@@ -239,6 +276,8 @@ function LianjiaCrawler() {
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
+
+
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 module.exports = LianjiaCrawler;
