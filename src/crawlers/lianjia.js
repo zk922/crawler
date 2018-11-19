@@ -318,7 +318,6 @@ function LianjiaCrawler() {
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
-
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 
