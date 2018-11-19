@@ -254,7 +254,14 @@ function getErshoufangDistrict(city) {
           district: []
         };
 
-        //todo 分析页面，抓取district数据
+        let eleList = $('.sub_nav.section_sub_nav a');
+        eleList.each(function (i) {
+          let district = {
+            name: $(this).text(),
+            alias: $(this).attr('href').split('/')[2]
+          };
+          result.district.push(district);
+        });
 
         resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
         done();
@@ -277,7 +284,10 @@ LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 
-
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
+
+
+
+LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 
 module.exports = LianjiaCrawler;
