@@ -351,6 +351,33 @@ function getErshoufangSectionList(city, section, page) {
 }
 
 
+/**
+ * 获取二手房详细信息
+ * @param {string}city    城市别名alias
+ * @param {string}id     房子id，唯一标识
+ * @return {Promise}
+ * **/
+function getErshoufangDetail(city, id) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.lianjia.com/ershoufang/${id}.html`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}  ${id}的信息失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+
+        //todo 抓取详情
+
+        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data:data});
+        done();
+      }
+    })
+  });}
 
 /**
  * 导出的链家爬虫类
