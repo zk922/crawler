@@ -371,7 +371,10 @@ function getErshoufangDetail(city, id) {
         }
         let $ = res.$;
 
-        //todo 抓取详情
+
+        let name = $('h1.main').text();
+
+        let total_price = $('.price') //todo 抓取详情
 
         resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data:data});
         done();
