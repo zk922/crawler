@@ -254,7 +254,7 @@ function getErshoufangDistrict(city) {
           district: []
         };
 
-        let eleList = $('.sub_nav.section_sub_nav a');
+        let eleList = $('div[data-role="ershoufang"]>div:first-child a');
         eleList.each(function (i) {
           let district = {
             name: $(this).text(),
@@ -293,7 +293,7 @@ function getErshoufangSection(city, district) {
 
         let result = [];
 
-        let eleList = $('.sub_sub_nav.section_sub_sub_nav a');
+        let eleList = $('div[data-role="ershoufang"]>div:nth-child(2) a');
         eleList.each(function (i) {
           result.push({
             name: $(this).text(),
@@ -306,6 +306,50 @@ function getErshoufangSection(city, district) {
     })
   });
 }
+
+/**
+ * 获取某个城市city区域section第i页的房产列表
+ * @param {string}city 城市
+ * @param {string}section 区域
+ * @param {string}page 第i页面
+ * @return {Promise}
+ * **/
+function getErshoufangSectionList(city, section, page) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.lianjia.com/ershoufang/${section}/pg${page}`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}  ${section} 第${page}页的信息失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+
+        let total = +($('h2.total span').text().trim());
+        let result = [];
+        let eleList = $('ul.sellListContent li.LOGCLICKDATA .info .title a');
+        eleList.each(function (i) {
+          let that = $(this);
+          result.push({
+            name: that.text(),
+            id: that.attr('data-housecode'),
+            href: that.attr('href')
+          })
+        });
+        resolve({result: 0, msg: `获取${city}  ${section} 第${page}页的信息成功`, data: {
+          total: total,
+          page: page,
+          list: result
+        }});
+        done();
+      }
+    })
+  });
+}
+
 
 
 /**
@@ -324,5 +368,8 @@ LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
+LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
+
+
 
 module.exports = LianjiaCrawler;
