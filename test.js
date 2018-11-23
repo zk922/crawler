@@ -10,7 +10,10 @@ let c = new LianjiaCrawler();
 //   console.log(JSON.stringify(v));
 // });
 
-c.getErshoufangSectionList('hf', 'baohe', 1).then(v=>{
-  console.log(JSON.stringify(v.data));
-  console.log(v.data.list.length);
+// c.getErshoufangSectionList('hf', 'baohe', 1).then(v=>{
+//   console.log(JSON.stringify(v.data));
+//   console.log(v.data.list.length);
+// });
+c.getErshoufangDetail('bj', '101103624977').then(v=>{
+
 });

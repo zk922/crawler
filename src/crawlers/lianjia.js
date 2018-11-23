@@ -372,11 +372,54 @@ function getErshoufangDetail(city, id) {
         let $ = res.$;
 
 
-        let name = $('h1.main').text();
+        let name = $('h1.main').text();  //name
 
-        let total_price = $('.price') //todo 抓取详情
+        //总价
+        let price_total = $('.price .total').text();
+        let price_total_unit = $('.price .unit span').text();
+        console.log(price_total, '   ', price_total_unit);
 
-        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data:data});
+        //均价
+        let averagePriceString = $('.unitPriceValue').text();
+        let price_average = averagePriceString.match(/\d+/)[0];
+        let price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
+        console.log(price_average, '   ', price_average_unit);
+
+        //小区
+        let communityEle = $('.communityName a:first-of-type');
+        let community_name = communityEle.text();
+        let community_id = communityEle.attr('href').split('/')[2];
+        console.log(community_name, '   ', community_id);
+
+        //城区
+        let districtEle = $('.areaName .info a:nth-child(1)');
+        let district_name = districtEle.text();
+        let district_alias = districtEle.attr('href').split('/')[2];
+        console.log(district_name, '    ', district_alias);
+
+        //地区
+        let sectionEle = $('.areaName .info a:nth-child(2)');
+        let section_name = sectionEle.text();
+        let section_alias = sectionEle.attr('href').split('/')[2];
+        console.log(section_name, '   ', section_alias);
+
+        //详情信息
+        let infoList = $('.introContent ul li');
+        let info = {};
+
+        infoList.each(function(i){
+          let str = $(this).text();
+
+          switch (true) {//todo
+            case /.*房屋户型.*/.test(str):
+              info.house_model = str.replace(/.*/)
+          }
+
+        });
+
+
+
+        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: null});
         done();
       }
     })
@@ -399,6 +442,7 @@ LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
+LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
 
 
 
