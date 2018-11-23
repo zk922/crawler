@@ -254,7 +254,7 @@ function getErshoufangDistrict(city) {
           district: []
         };
 
-        let eleList = $('.sub_nav.section_sub_nav a');
+        let eleList = $('div[data-role="ershoufang"]>div:first-child a');
         eleList.each(function (i) {
           let district = {
             name: $(this).text(),
@@ -293,7 +293,7 @@ function getErshoufangSection(city, district) {
 
         let result = [];
 
-        let eleList = $('.sub_sub_nav.section_sub_sub_nav a');
+        let eleList = $('div[data-role="ershoufang"]>div:nth-child(2) a');
         eleList.each(function (i) {
           result.push({
             name: $(this).text(),
@@ -307,6 +307,123 @@ function getErshoufangSection(city, district) {
   });
 }
 
+/**
+ * 获取某个城市city区域section第i页的房产列表
+ * @param {string}city 城市
+ * @param {string}section 区域
+ * @param {string}page 第i页面
+ * @return {Promise}
+ * **/
+function getErshoufangSectionList(city, section, page) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.lianjia.com/ershoufang/${section}/pg${page}`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}  ${section} 第${page}页的信息失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+
+        let total = +($('h2.total span').text().trim());
+        let result = [];
+        let eleList = $('ul.sellListContent li.LOGCLICKDATA .info .title a');
+        eleList.each(function (i) {
+          let that = $(this);
+          result.push({
+            name: that.text(),
+            id: that.attr('data-housecode'),
+            href: that.attr('href')
+          })
+        });
+        resolve({result: 0, msg: `获取${city}  ${section} 第${page}页的信息成功`, data: {
+          total: total,
+          page: page,
+          list: result
+        }});
+        done();
+      }
+    })
+  });
+}
+
+
+/**
+ * 获取二手房详细信息
+ * @param {string}city    城市别名alias
+ * @param {string}id     房子id，唯一标识
+ * @return {Promise}
+ * **/
+function getErshoufangDetail(city, id) {
+  let _this = this;
+  return new Promise(function (resolve, reject) {
+    _this.c.queue({
+      uri: `https://${city}.lianjia.com/ershoufang/${id}.html`,
+      callback: function (error, res, done) {
+        if(error){
+          console.log(error);
+          done();
+          reject({msg: `获取${city}  ${id}的信息失败`, result: 1, data: error});
+          return;
+        }
+        let $ = res.$;
+
+
+        let name = $('h1.main').text();  //name
+
+        //总价
+        let price_total = $('.price .total').text();
+        let price_total_unit = $('.price .unit span').text();
+        console.log(price_total, '   ', price_total_unit);
+
+        //均价
+        let averagePriceString = $('.unitPriceValue').text();
+        let price_average = averagePriceString.match(/\d+/)[0];
+        let price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
+        console.log(price_average, '   ', price_average_unit);
+
+        //小区
+        let communityEle = $('.communityName a:first-of-type');
+        let community_name = communityEle.text();
+        let community_id = communityEle.attr('href').split('/')[2];
+        console.log(community_name, '   ', community_id);
+
+        //城区
+        let districtEle = $('.areaName .info a:nth-child(1)');
+        let district_name = districtEle.text();
+        let district_alias = districtEle.attr('href').split('/')[2];
+        console.log(district_name, '    ', district_alias);
+
+        //地区
+        let sectionEle = $('.areaName .info a:nth-child(2)');
+        let section_name = sectionEle.text();
+        let section_alias = sectionEle.attr('href').split('/')[2];
+        console.log(section_name, '   ', section_alias);
+
+        //详情信息
+        let infoList = $('.introContent ul li');
+        let info = {};
+
+        infoList.each(function(i){
+          let str = $(this).text();
+
+          switch (true) {//todo
+            case /.*房屋户型.*/.test(str):
+              info.house_model = str.replace(/.*/)
+          }
+
+        });
+
+
+
+        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: null});
+        done();
+      }
+    })
+  });}
 
 /**
  * 导出的链家爬虫类
@@ -324,5 +441,9 @@ LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
+LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
+LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
+
+
 
 module.exports = LianjiaCrawler;
