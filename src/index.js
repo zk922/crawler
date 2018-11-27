@@ -5,8 +5,6 @@ const koaBodyparser = require('koa-bodyparser');
 const koaStatic = require('koa-static');
 const router = require('./router');
 
-
-
 let app = new Koa();
 
 app.use(koaBodyparser({
