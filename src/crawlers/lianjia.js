@@ -270,7 +270,6 @@ function getErshoufangDistrict(city) {
   });
 }
 
-
 /**
  * 获取链家二手房某个城市的分区列表
  * @param {string} city
@@ -370,53 +369,108 @@ function getErshoufangDetail(city, id) {
           return;
         }
         let $ = res.$;
-
-
         let name = $('h1.main').text();  //name
-
         //总价
         let price_total = $('.price .total').text();
         let price_total_unit = $('.price .unit span').text();
         console.log(price_total, '   ', price_total_unit);
-
         //均价
         let averagePriceString = $('.unitPriceValue').text();
         let price_average = averagePriceString.match(/\d+/)[0];
         let price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
         console.log(price_average, '   ', price_average_unit);
-
         //小区
         let communityEle = $('.communityName a:first-of-type');
         let community_name = communityEle.text();
         let community_id = communityEle.attr('href').split('/')[2];
         console.log(community_name, '   ', community_id);
-
         //城区
         let districtEle = $('.areaName .info a:nth-child(1)');
         let district_name = districtEle.text();
         let district_alias = districtEle.attr('href').split('/')[2];
         console.log(district_name, '    ', district_alias);
-
         //地区
         let sectionEle = $('.areaName .info a:nth-child(2)');
         let section_name = sectionEle.text();
         let section_alias = sectionEle.attr('href').split('/')[2];
         console.log(section_name, '   ', section_alias);
-
         //详情信息
         let infoList = $('.introContent ul li');
         let info = {};
-
         infoList.each(function(i){
-          let str = $(this).text();
-
-          switch (true) {//todo
+          let str = $(this).text().trim();
+          // console.log(str);
+          switch (true) {
             case /.*房屋户型.*/.test(str):
-              info.house_model = str.replace(/.*/)
+              info.house_model = str.replace(/.*房屋户型\s*/, '');
+              break;
+            case /.*建筑面积.*/.test(str):
+              str.replace(/.*建筑面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+                info.building_area = m1;
+                info.building_area_unit = m2;
+              });
+              break;
+            case /.*套内面积.*/.test(str):
+              str.replace(/.*套内面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+                info.using_area = m1;
+                info.using_area_unit = m2;
+              });
+              break;
+            case /.*房屋朝向.*/.test(str):
+              info.orientation = str.replace(/.*房屋朝向\s*/, '');
+              break;
+            case /.*装修情况.*/.test(str):
+              info.decoration = str.replace(/.*装修情况\s*/, '');
+              break;
+            case /.*供暖方式.*/.test(str):
+              info.heating = str.replace(/.*供暖方式\s*/, '');
+              break;
+            case /.*产权年限.*/.test(str):
+              info.property_right_last = str.replace(/.*产权年限\s*/, '');
+              break;
+            case /.*所在楼层.*/.test(str):
+              info.floor = str.replace(/.*所在楼层\s*/, '');
+              break;
+            case /.*户型结构.*/.test(str):
+              info.hm_structure = str.replace(/.*户型结构\s*/, '');
+              break;
+            case /.*建筑类型.*/.test(str):
+              info.building_type = str.replace(/.*建筑类型\s*/, '');
+              break;
+            case /.*建筑结构.*/.test(str):
+              info.building_structure = str.replace(/.*建筑结构\s*/, '');
+              break;
+            case /.*梯户比例.*/.test(str):
+              info.elevator_resident_ratio = str.replace(/.*梯户比例\s*/, '');
+              break;
+            case /.*配备电梯.*/.test(str):
+              info.elevator = str.replace(/.*配备电梯\s*/, '');
+              break;
+            case /.*挂牌时间.*/.test(str):
+              info.onsale_time = str.replace(/.*挂牌时间\s*/, '');
+              break;
+            case /.*上次交易.*/.test(str):
+              info.last_sale = str.replace(/.*上次交易\s*/, '');
+              break;
+            case /.*交易权属.*/.test(str):
+              info.sale_type = str.replace(/.*交易权属\s*/, '');
+              break;
+            case /.*房屋用途.*/.test(str):
+              info.usage = str.replace(/.*房屋用途\s*/, '');
+              break;
+            case /.*房屋年限.*/.test(str):
+              info.house_age_limit = str.replace(/.*房屋年限\s*/, '');
+              break;
+            case /.*产权所属.*/.test(str):
+              info.roperty_ownership = str.replace(/.*产权所属\s*/, '');
+              break;
+            case /.*抵押信息.*/.test(str):
+              info.mortgage = str.replace(/.*抵押信息\s*/, '');
+              break;
           }
 
         });
-
+        console.log(JSON.stringify(info));
 
 
         resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: null});
