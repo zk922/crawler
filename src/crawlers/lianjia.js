@@ -89,7 +89,6 @@ function getCityLoupanTotal(city, section=undefined){
     });
   });
 }
-
 /**
  * 获取某一页房产数据
  * 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
@@ -111,14 +110,15 @@ function getCityLoupanPerpage(city, page, section=undefined){
           reject({msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘失败`, result: 1, data: error});
           return;
         }
-        let list = JSON.parse(res.body).data.list;
-        resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, list: list, city: city}});
+        let parsedData = JSON.parse(res.body);
+        let list = parsedData.data.list;
+        let total = +(parsedData.data.total);
+        resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, total: total, list: list, city: city}});
         done();
       }
     })
   });
 }
-
 /**
  * 获取某个城市city的新房的行政分区+再细分区域
  * @description     仅需要在获取到某个城市新房房源超过100页时候调用，即超过1000个新房
@@ -178,7 +178,6 @@ function getDistrictSection(city) {
     })
   });
 }
-
 /**
  * 获取城市city的大行政区域，东城区，西城区之类
  * @deprecated   可以直接用上面方法获取所有大小区域信息
@@ -228,8 +227,6 @@ function getCityDistrict(city) {
 }
 
 
-
-
 /**
  * 获取链家二手房某个城市的分区列表
  * @param {string} city
@@ -269,7 +266,6 @@ function getErshoufangDistrict(city) {
     })
   });
 }
-
 /**
  * 获取链家二手房某个城市的分区列表
  * @param {string} city
@@ -305,7 +301,6 @@ function getErshoufangSection(city, district) {
     })
   });
 }
-
 /**
  * 获取某个城市city区域section第i页的房产列表
  * @param {string}city 城市
@@ -348,8 +343,6 @@ function getErshoufangSectionList(city, section, page) {
     })
   });
 }
-
-
 /**
  * 获取二手房详细信息
  * @param {string}city    城市别名alias
@@ -475,7 +468,10 @@ function getErshoufangDetail(city, id) {
         done();
       }
     })
-  });}
+  });
+}
+
+
 
 /**
  * 导出的链家爬虫类
@@ -488,14 +484,11 @@ LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
-
-
+LianjiaCrawler.prototype.getCityDistrict = getCityDistrict;
 
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
-
-
 
 module.exports = LianjiaCrawler;
