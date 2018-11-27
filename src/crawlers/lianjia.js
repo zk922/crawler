@@ -369,35 +369,36 @@ function getErshoufangDetail(city, id) {
           return;
         }
         let $ = res.$;
-        let name = $('h1.main').text();  //name
+        let info = {};  //数据对象
+
+        info.name = $('h1.main').text();  //name
         //总价
-        let price_total = $('.price .total').text();
-        let price_total_unit = $('.price .unit span').text();
-        console.log(price_total, '   ', price_total_unit);
+        info.price_total = $('.price .total').text();
+        info.price_total_unit = $('.price .unit span').text();
+        console.log(info.price_total, '   ', info.price_total_unit);
         //均价
         let averagePriceString = $('.unitPriceValue').text();
-        let price_average = averagePriceString.match(/\d+/)[0];
-        let price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
-        console.log(price_average, '   ', price_average_unit);
+        info.price_average = averagePriceString.match(/\d+/)[0];
+        info.price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
+        console.log(info.price_average, '   ', info.price_average_unit);
         //小区
         let communityEle = $('.communityName a:first-of-type');
-        let community_name = communityEle.text();
-        let community_id = communityEle.attr('href').split('/')[2];
-        console.log(community_name, '   ', community_id);
+        info.community_name = communityEle.text();
+        info.community_id = communityEle.attr('href').split('/')[2];
+        console.log(info.community_name, '   ', info.community_id);
         //城区
         let districtEle = $('.areaName .info a:nth-child(1)');
-        let district_name = districtEle.text();
-        let district_alias = districtEle.attr('href').split('/')[2];
-        console.log(district_name, '    ', district_alias);
+        info.district_name = districtEle.text();
+        info.district_alias = districtEle.attr('href').split('/')[2];
+        console.log(info.district_name, '    ', info.district_alias);
         //地区
         let sectionEle = $('.areaName .info a:nth-child(2)');
-        let section_name = sectionEle.text();
-        let section_alias = sectionEle.attr('href').split('/')[2];
-        console.log(section_name, '   ', section_alias);
+        info.section_name = sectionEle.text();
+        info.section_alias = sectionEle.attr('href').split('/')[2];
+        console.log(info.section_name, '   ', info.section_alias);
         //详情信息
-        let infoList = $('.introContent ul li');
-        let info = {};
-        infoList.each(function(i){
+        let detailList = $('.introContent ul li');
+        detailList.each(function(i){
           let str = $(this).text().trim();
           // console.log(str);
           switch (true) {
@@ -468,12 +469,9 @@ function getErshoufangDetail(city, id) {
               info.mortgage = str.replace(/.*抵押信息\s*/, '');
               break;
           }
-
         });
         console.log(JSON.stringify(info));
-
-
-        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: null});
+        resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: info});
         done();
       }
     })
