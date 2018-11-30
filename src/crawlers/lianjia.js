@@ -52,6 +52,7 @@ function getLianjiaCities(){
  * @param {string} city    城市的简写别名，用来获取城市连接
  * @param {string=}section  区域
  * @return {Promise<{result: number, msg: string, data: ?}>}
+ * @deprecated  获取某一页的数据可以获取到总数了
  * **/
 function getCityLoupanTotal(city, section=undefined){
   let _this = this;
@@ -89,7 +90,6 @@ function getCityLoupanTotal(city, section=undefined){
     });
   });
 }
-
 /**
  * 获取某一页房产数据
  * 链家限制显示只有100页数据。有的城市会超过100页，需要分区域扒取
@@ -111,14 +111,15 @@ function getCityLoupanPerpage(city, page, section=undefined){
           reject({msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘失败`, result: 1, data: error});
           return;
         }
-        let list = JSON.parse(res.body).data.list;
-        resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, list: list, city: city}});
+        let parsedData = JSON.parse(res.body);
+        let list = parsedData.data.list;
+        let total = +(parsedData.data.total);
+        resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, total: total, list: list, city: city}});
         done();
       }
     })
   });
 }
-
 /**
  * 获取某个城市city的新房的行政分区+再细分区域
  * @description     仅需要在获取到某个城市新房房源超过100页时候调用，即超过1000个新房
@@ -154,22 +155,19 @@ function getDistrictSection(city) {
           city: city,
           district: []
         };
-        itemList.each(function (i) {
-
+        itemList.each(function () {
           let districtDetail = {
             districtName: $(this).text(),
             districtAlias: $(this).attr('data-district-spell'),
             section: []
           };
-
           let sectionList = $(`.bizcircle-item[data-district-id="${$(this).attr('data-district-id')}"]`);
-          sectionList.each(function (i) {
+          sectionList.each(function () {
             districtDetail.section.push({
               sectionName: $('.bizcircle-item-name', this).text(),
               sectionAlias: $(this).attr('data-bizcircle-spell')
             });
           });
-
           result.district.push(districtDetail);
         });
         resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
@@ -178,7 +176,6 @@ function getDistrictSection(city) {
     })
   });
 }
-
 /**
  * 获取城市city的大行政区域，东城区，西城区之类
  * @deprecated   可以直接用上面方法获取所有大小区域信息
@@ -213,7 +210,7 @@ function getCityDistrict(city) {
           city: city,
           district: []
         };
-        itemList.each(function (i) {
+        itemList.each(function () {
           // console.log(this);
           result.district.push({
             districtName: $(this).text(),
@@ -226,8 +223,6 @@ function getCityDistrict(city) {
     })
   });
 }
-
-
 
 
 /**
@@ -253,23 +248,20 @@ function getErshoufangDistrict(city) {
           city: city,
           district: []
         };
-
         let eleList = $('div[data-role="ershoufang"]>div:first-child a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           let district = {
             name: $(this).text(),
             alias: $(this).attr('href').split('/')[2]
           };
           result.district.push(district);
         });
-
         resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
         done();
       }
     })
   });
 }
-
 /**
  * 获取链家二手房某个城市的分区列表
  * @param {string} city
@@ -289,11 +281,9 @@ function getErshoufangSection(city, district) {
           return;
         }
         let $ = res.$;
-
         let result = [];
-
         let eleList = $('div[data-role="ershoufang"]>div:nth-child(2) a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           result.push({
             name: $(this).text(),
             alias: $(this).attr('href').split('/')[2]
@@ -305,7 +295,6 @@ function getErshoufangSection(city, district) {
     })
   });
 }
-
 /**
  * 获取某个城市city区域section第i页的房产列表
  * @param {string}city 城市
@@ -326,11 +315,10 @@ function getErshoufangSectionList(city, section, page) {
           return;
         }
         let $ = res.$;
-
         let total = +($('h2.total span').text().trim());
         let result = [];
         let eleList = $('ul.sellListContent li.LOGCLICKDATA .info .title a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           let that = $(this);
           result.push({
             name: that.text(),
@@ -348,8 +336,6 @@ function getErshoufangSectionList(city, section, page) {
     })
   });
 }
-
-
 /**
  * 获取二手房详细信息
  * @param {string}city    城市别名alias
@@ -370,7 +356,6 @@ function getErshoufangDetail(city, id) {
         }
         let $ = res.$;
         let info = {};  //数据对象
-
         info.name = $('h1.main').text();  //name
         //总价
         info.price_total = $('.price .total').text();
@@ -398,7 +383,7 @@ function getErshoufangDetail(city, id) {
         console.log(info.section_name, '   ', info.section_alias);
         //详情信息
         let detailList = $('.introContent ul li');
-        detailList.each(function(i){
+        detailList.each(function(){
           let str = $(this).text().trim();
           // console.log(str);
           switch (true) {
@@ -406,13 +391,13 @@ function getErshoufangDetail(city, id) {
               info.house_model = str.replace(/.*房屋户型\s*/, '');
               break;
             case /.*建筑面积.*/.test(str):
-              str.replace(/.*建筑面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+              str.replace(/.*建筑面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2)=>{
                 info.building_area = m1;
                 info.building_area_unit = m2;
               });
               break;
             case /.*套内面积.*/.test(str):
-              str.replace(/.*套内面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+              str.replace(/.*套内面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2)=>{
                 info.using_area = m1;
                 info.using_area_unit = m2;
               });
@@ -475,7 +460,63 @@ function getErshoufangDetail(city, id) {
         done();
       }
     })
-  });}
+  });
+}
+
+
+
+/**
+ * 获取某个城市新房的数据
+ * @param {string}city  城市的alias
+ * @param {function}callback  每获取到一条房产数据，执行一次的回调，第一个参数为该条房产数据。如果失败，第一个参数为null，第二个参数为错误信息
+ * @return {Promise}
+ * **/
+async function getLoupanByCity(city, callback) {
+  let _this = this;
+
+  let total;
+  //尝试获取该城市房子总数
+  try{
+    total = (await _this.getCityLoupanPerpage(city, 1)).data.total;
+  }
+  catch (e) {
+    return Promise.reject({msg: '获取某个城市新房数据失败，可能没有新房信息', error: e});
+  }
+
+  //房子总数是否超过1000，需要分情况
+  if(total <= 1000){//不超过1000，直接分页获取
+    let promiseArray = [];
+    for(let i=0; i*10<total; i++){
+      let page = i + 1;
+      promiseArray.push(_this.getCityLoupanPerpage(city, page).then(result => {
+        let list = result.data.list;
+        list.forEach(v => {
+          callback(v);
+        });
+      })
+      .catch(err => {
+        callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
+        console.log(`获取${city}第${page}页新房数据失败`, err);
+      }));
+    }
+    return Promise.all(promiseArray);
+  }
+  else{//超过1000，分区域获取
+    let sections;
+    try {
+      //todo  分区域获取某个城市的"新房"数据
+    }
+    catch (e) {
+
+    }
+  }
+}
+
+
+
+
+
+
 
 /**
  * 导出的链家爬虫类
@@ -484,17 +525,21 @@ function getErshoufangDetail(city, id) {
 function LianjiaCrawler() {
   this.c = createCrawler()
 }
+//获取城市列表
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
+//新房相关<基础>方法
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
-
-
-
+LianjiaCrawler.prototype.getCityDistrict = getCityDistrict;
+//二手房相关<基础>方法
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
+
+
+
 
 
 
