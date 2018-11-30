@@ -14,6 +14,10 @@ let c = new LianjiaCrawler();
 //   console.log(JSON.stringify(v.data));
 //   console.log(v.data.list.length);
 // });
-c.getErshoufangDetail('bj', '101103624977').then(v=>{
-
-});
+// c.getErshoufangDetail('bj', '101103624977').then(v=>{
+//
+// });
+let i = 0;
+c.getLoupanByCity('gz', v=>{
+  i++
+}).then(()=>{console.log(i)});
