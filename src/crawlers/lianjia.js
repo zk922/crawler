@@ -466,6 +466,59 @@ function getErshoufangDetail(city, id) {
 
 
 /**
+ * 获取某个城市新房的数据
+ * @param {string}city  城市的alias
+ * @param {function}callback  每获取到一条房产数据，执行一次的回调，第一个参数为该条房产数据。如果失败，第一个参数为null，第二个参数为错误信息
+ * @return {Promise}
+ * **/
+async function getLoupanByCity(city, callback) {
+  let _this = this;
+
+  let total;
+  //尝试获取该城市房子总数
+  try{
+    total = (await _this.getCityLoupanPerpage(city, 1)).data.total;
+  }
+  catch (e) {
+    return Promise.reject({msg: '获取某个城市新房数据失败，可能没有新房信息', error: e});
+  }
+
+  //房子总数是否超过1000，需要分情况
+  if(total <= 1000){//不超过1000，直接分页获取
+    let promiseArray = [];
+    for(let i=0; i*10<total; i++){
+      let page = i + 1;
+      promiseArray.push(_this.getCityLoupanPerpage(city, page).then(result => {
+        let list = result.data.list;
+        list.forEach(v => {
+          callback(v);
+        });
+      })
+      .catch(err => {
+        callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
+        console.log(`获取${city}第${page}页新房数据失败`, err);
+      }));
+    }
+    return Promise.all(promiseArray);
+  }
+  else{//超过1000，分区域获取
+    let sections;
+    try {
+      //todo  分区域获取某个城市的"新房"数据
+    }
+    catch (e) {
+
+    }
+  }
+}
+
+
+
+
+
+
+
+/**
  * 导出的链家爬虫类
  * @constructor
  * **/
