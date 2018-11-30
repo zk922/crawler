@@ -111,9 +111,22 @@ function getCityLoupanPerpage(city, page, section=undefined){
           reject({msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘失败`, result: 1, data: error});
           return;
         }
-        let parsedData = JSON.parse(res.body);
-        let list = parsedData.data.list;
-        let total = +(parsedData.data.total);
+        if(res.statusCode !== 200){
+          reject({msg: `获取${city}的楼盘失败, 请求可能重定向`, result: 2, data: error});
+          done();
+          return;
+        }
+        let result;
+        try{
+          result = JSON.parse(res.body).data;
+        }
+        catch (e) {
+          reject({msg: `获取${city}的楼盘失败, 请求可能重定向`, result: 3, data: error});
+          done();
+          return;
+        }
+        let list = result.list;
+        let total = +(result.total);
         resolve({result: 0, msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘成功`, data: {page: page, total: total, list: list, city: city}});
         done();
       }
@@ -491,11 +504,11 @@ async function getLoupanByCity(city, callback) {
       promiseArray.push(_this.getCityLoupanPerpage(city, page).then(result => {
         let list = result.data.list;
         list.forEach(v => {
-          callback(v);
+          callback && callback(v);
         });
       })
       .catch(err => {
-        callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
+        callback && callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
         console.log(`获取${city}第${page}页新房数据失败`, err);
       }));
     }
@@ -538,7 +551,8 @@ LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
 
-
+//获取某个城市的新房
+LianjiaCrawler.prototype.getLoupanByCity = getLoupanByCity;
 
 
 
