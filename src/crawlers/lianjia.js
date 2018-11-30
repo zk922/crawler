@@ -52,6 +52,7 @@ function getLianjiaCities(){
  * @param {string} city    城市的简写别名，用来获取城市连接
  * @param {string=}section  区域
  * @return {Promise<{result: number, msg: string, data: ?}>}
+ * @deprecated  获取某一页的数据可以获取到总数了
  * **/
 function getCityLoupanTotal(city, section=undefined){
   let _this = this;
@@ -154,22 +155,19 @@ function getDistrictSection(city) {
           city: city,
           district: []
         };
-        itemList.each(function (i) {
-
+        itemList.each(function () {
           let districtDetail = {
             districtName: $(this).text(),
             districtAlias: $(this).attr('data-district-spell'),
             section: []
           };
-
           let sectionList = $(`.bizcircle-item[data-district-id="${$(this).attr('data-district-id')}"]`);
-          sectionList.each(function (i) {
+          sectionList.each(function () {
             districtDetail.section.push({
               sectionName: $('.bizcircle-item-name', this).text(),
               sectionAlias: $(this).attr('data-bizcircle-spell')
             });
           });
-
           result.district.push(districtDetail);
         });
         resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
@@ -212,7 +210,7 @@ function getCityDistrict(city) {
           city: city,
           district: []
         };
-        itemList.each(function (i) {
+        itemList.each(function () {
           // console.log(this);
           result.district.push({
             districtName: $(this).text(),
@@ -250,16 +248,14 @@ function getErshoufangDistrict(city) {
           city: city,
           district: []
         };
-
         let eleList = $('div[data-role="ershoufang"]>div:first-child a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           let district = {
             name: $(this).text(),
             alias: $(this).attr('href').split('/')[2]
           };
           result.district.push(district);
         });
-
         resolve({result: 0, msg: `获取${city}区域district成功`, data: result});
         done();
       }
@@ -285,11 +281,9 @@ function getErshoufangSection(city, district) {
           return;
         }
         let $ = res.$;
-
         let result = [];
-
         let eleList = $('div[data-role="ershoufang"]>div:nth-child(2) a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           result.push({
             name: $(this).text(),
             alias: $(this).attr('href').split('/')[2]
@@ -321,11 +315,10 @@ function getErshoufangSectionList(city, section, page) {
           return;
         }
         let $ = res.$;
-
         let total = +($('h2.total span').text().trim());
         let result = [];
         let eleList = $('ul.sellListContent li.LOGCLICKDATA .info .title a');
-        eleList.each(function (i) {
+        eleList.each(function () {
           let that = $(this);
           result.push({
             name: that.text(),
@@ -363,7 +356,6 @@ function getErshoufangDetail(city, id) {
         }
         let $ = res.$;
         let info = {};  //数据对象
-
         info.name = $('h1.main').text();  //name
         //总价
         info.price_total = $('.price .total').text();
@@ -391,7 +383,7 @@ function getErshoufangDetail(city, id) {
         console.log(info.section_name, '   ', info.section_alias);
         //详情信息
         let detailList = $('.introContent ul li');
-        detailList.each(function(i){
+        detailList.each(function(){
           let str = $(this).text().trim();
           // console.log(str);
           switch (true) {
@@ -399,13 +391,13 @@ function getErshoufangDetail(city, id) {
               info.house_model = str.replace(/.*房屋户型\s*/, '');
               break;
             case /.*建筑面积.*/.test(str):
-              str.replace(/.*建筑面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+              str.replace(/.*建筑面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2)=>{
                 info.building_area = m1;
                 info.building_area_unit = m2;
               });
               break;
             case /.*套内面积.*/.test(str):
-              str.replace(/.*套内面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2, s)=>{
+              str.replace(/.*套内面积\s*(\d+\.?\d+)\s*(\S*)/, (m, m1, m2)=>{
                 info.using_area = m1;
                 info.using_area_unit = m2;
               });
@@ -480,15 +472,22 @@ function getErshoufangDetail(city, id) {
 function LianjiaCrawler() {
   this.c = createCrawler()
 }
+//获取城市列表
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
+//新房相关<基础>方法
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 LianjiaCrawler.prototype.getCityDistrict = getCityDistrict;
-
+//二手房相关<基础>方法
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
+
+
+
+
+
 
 module.exports = LianjiaCrawler;
