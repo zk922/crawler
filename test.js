@@ -19,5 +19,7 @@ let c = new LianjiaCrawler();
 // });
 let i = 0;
 c.getLoupanByCity('gz', v=>{
-  i++
+  if(v){
+    i++
+  }
 }).then(()=>{console.log(i)});
