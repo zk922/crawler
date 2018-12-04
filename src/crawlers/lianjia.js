@@ -1,6 +1,6 @@
 const { cityUrl } = require('../urls/lianjiaUrl');
 const createCrawler = require('./crawler');
-
+const logger = require('../log');
 /**
  * 获取链家城市列表
  * @return {Promise<{result: number, msg: string, data: *}>}
@@ -13,7 +13,7 @@ function getLianjiaCities(){
       uri: cityUrl,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({result: 1, msg: '链家城市列表获取失败', data: error});
           return;
@@ -62,7 +62,7 @@ function getCityLoupanTotal(city, section=undefined){
       jQuery: false,
       callback: function (error, res, done) {
         if(error){
-          // console.log(123, error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}的楼盘总数失败`, result: 1, data: error});
           return;
@@ -106,7 +106,7 @@ function getCityLoupanPerpage(city, page, section=undefined){
       jQuery: false,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}${section ? ' '+ section : ''}的第${page}页楼盘失败`, result: 1, data: error});
           return;
@@ -157,7 +157,7 @@ function getDistrictSection(city) {
       uri: `https://${city}.fang.lianjia.com/loupan/`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
           return;
@@ -212,7 +212,7 @@ function getCityDistrict(city) {
       uri: `https://${city}.fang.lianjia.com/loupan/`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
           return;
@@ -250,7 +250,7 @@ function getErshoufangDistrict(city) {
       uri: `https://${city}.lianjia.com/ershoufang/`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}的区域district失败`, result: 1, data: error});
           return;
@@ -288,7 +288,7 @@ function getErshoufangSection(city, district) {
       uri: `https://${city}.lianjia.com/ershoufang/${district}/`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}  ${district}的sections失败`, result: 1, data: error});
           return;
@@ -322,7 +322,7 @@ function getErshoufangSectionList(city, section, page) {
       uri: `https://${city}.lianjia.com/ershoufang/${section}/pg${page}`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}  ${section} 第${page}页的信息失败`, result: 1, data: error});
           return;
@@ -362,7 +362,7 @@ function getErshoufangDetail(city, id) {
       uri: `https://${city}.lianjia.com/ershoufang/${id}.html`,
       callback: function (error, res, done) {
         if(error){
-          console.log(error);
+          logger.error(error);
           done();
           reject({msg: `获取${city}  ${id}的信息失败`, result: 1, data: error});
           return;
@@ -479,16 +479,16 @@ function getErshoufangDetail(city, id) {
 
 
 /**
- * 获取某个城市新房的数据
+ * 获取某个城市新房的数据，每获取一条，执行一次callback
  * @param {string}city  城市的alias
  * @param {function}callback  每获取到一条房产数据，执行一次的回调，第一个参数为该条房产数据。如果失败，第一个参数为null，第二个参数为错误信息
  * @return {Promise}
  * **/
-async function getLoupanByCity(city, callback) {
+async function getLoupanByCity(city, callback=null) {
   let _this = this;
 
   let total;
-  //尝试获取该城市房子总数
+  //1.尝试获取该城市房子总数
   try{
     total = (await _this.getCityLoupanPerpage(city, 1)).data.total;
   }
@@ -496,8 +496,9 @@ async function getLoupanByCity(city, callback) {
     return Promise.reject({msg: '获取某个城市新房数据失败，可能没有新房信息', error: e});
   }
 
-  //房子总数是否超过1000，需要分情况
-  if(total <= 1000){//不超过1000，直接分页获取
+  //2.区分房子总数是否超过1000
+  if(total <= 1000){
+    //2.1 不超过1000，直接分页获取
     let promiseArray = [];
     for(let i=0; i*10<total; i++){
       let page = i + 1;
@@ -509,24 +510,49 @@ async function getLoupanByCity(city, callback) {
       })
       .catch(err => {
         callback && callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
-        console.log(`获取${city}第${page}页新房数据失败`, err);
+        logger.error(`获取${city}第${page}页新房数据失败`, err);
       }));
     }
     return Promise.all(promiseArray);
   }
-  else{//超过1000，分区域获取
+  else{
+    //2.2超过1000，分区域获取
     let sections;
     try {
-      //todo  分区域获取某个城市的"新房"数据
+      sections = (await _this.getDistrictSection(city)).data;
     }
     catch (e) {
-
+      return Promise.reject({msg: `获取${city}分区信息失败`, error: e});
     }
+    let promiseArray = [];
+    //todo 有的district没有section
+    // sections.district.forEach(districtDetail => {
+    //   districtDetail.section.forEach(section => {
+    //     let { sectionName, sectionAlias } = section;
+    //     promiseArray.push(_this.getCityLoupanPerpage(city, 1, sectionAlias).then(result => {
+    //       let total = result.data.total;
+    //       logger.log(sectionName, sectionAlias, total);
+    //       let promiseArray = [];
+    //       for(let i=0; i*10<total; i++){
+    //         let page = i + 1;
+    //         promiseArray.push(_this.getCityLoupanPerpage(city, page, sectionAlias).then(result => {
+    //           let list = result.data.list;
+    //           list.forEach(v => {
+    //             callback && callback(v);
+    //           });
+    //         })
+    //         .catch(err => {
+    //           callback && callback(null, {msg: `获取${city} ${sectionName}(${sectionAlias})第${page}页新房数据失败`, error: err, city: city, page: page});
+    //           logger.error(`获取${city} ${sectionName}(${sectionAlias})第${page}页新房数据失败`, err);
+    //         }));
+    //       }
+    //       return Promise.all(promiseArray);
+    //     }))
+    //   });
+    // });
+    return Promise.all(promiseArray);
   }
 }
-
-
-
 
 
 
