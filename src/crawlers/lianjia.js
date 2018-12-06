@@ -486,7 +486,6 @@ function getErshoufangDetail(city, id) {
  * **/
 async function getLoupanByCity(city, callback=null) {
   let _this = this;
-
   let total;
   //1.尝试获取该城市房子总数
   try{
@@ -495,65 +494,85 @@ async function getLoupanByCity(city, callback=null) {
   catch (e) {
     return Promise.reject({msg: '获取某个城市新房数据失败，可能没有新房信息', error: e});
   }
-
   //2.区分房子总数是否超过1000
   if(total <= 1000){
     //2.1 不超过1000，直接分页获取
-    let promiseArray = [];
-    for(let i=0; i*10<total; i++){
-      let page = i + 1;
-      promiseArray.push(_this.getCityLoupanPerpage(city, page).then(result => {
-        let list = result.data.list;
-        list.forEach(v => {
-          callback && callback(v);
-        });
-      })
-      .catch(err => {
-        callback && callback(null, {msg: `获取${city}第${page}页新房数据失败`, error: err, city: city, page: page});
-        logger.error(`获取${city}第${page}页新房数据失败`, err);
-      }));
-    }
-    return Promise.all(promiseArray);
+    return _this.getCityLoupanLessThanThousand(city, callback);
   }
   else{
-    //2.2超过1000，分区域获取
-    let sections;
-    try {
-      sections = (await _this.getDistrictSection(city)).data;
-    }
-    catch (e) {
-      return Promise.reject({msg: `获取${city}分区信息失败`, error: e});
-    }
-    let promiseArray = [];
-    //todo 有的district没有section
-    // sections.district.forEach(districtDetail => {
-    //   districtDetail.section.forEach(section => {
-    //     let { sectionName, sectionAlias } = section;
-    //     promiseArray.push(_this.getCityLoupanPerpage(city, 1, sectionAlias).then(result => {
-    //       let total = result.data.total;
-    //       logger.log(sectionName, sectionAlias, total);
-    //       let promiseArray = [];
-    //       for(let i=0; i*10<total; i++){
-    //         let page = i + 1;
-    //         promiseArray.push(_this.getCityLoupanPerpage(city, page, sectionAlias).then(result => {
-    //           let list = result.data.list;
-    //           list.forEach(v => {
-    //             callback && callback(v);
-    //           });
-    //         })
-    //         .catch(err => {
-    //           callback && callback(null, {msg: `获取${city} ${sectionName}(${sectionAlias})第${page}页新房数据失败`, error: err, city: city, page: page});
-    //           logger.error(`获取${city} ${sectionName}(${sectionAlias})第${page}页新房数据失败`, err);
-    //         }));
-    //       }
-    //       return Promise.all(promiseArray);
-    //     }))
-    //   });
-    // });
-    return Promise.all(promiseArray);
+    //2.2 超过1000
+    return _this.getCityLoupanMoreThanThousand(city,callback);
   }
 }
+/**
+ * 获取新房时候，城市楼盘数量超过1000的方法
+ * @param{string} city
+ * @param{function?} callback 没获取到一条房产信息后的回调
+ * @retrun{Promise}
+ * **/
+async function getCityLoupanMoreThanThousand(city, callback=null) {
+  let _this = this;
+  let districtSection;
+  try{
+    districtSection = (await _this.getDistrictSection(city)).data;
+  }
+  catch (e) {
+    logger.error(e);
+    return Promise.reject({msg: `获取城市${city}分区失败`, err: e});
+  }
+  let promiseArray = [];  //每一次的请求
+  districtSection.district.forEach(district => {
+    //有的大区域不分section，需要直接用大区域获取数据,分section的，就需要每个section获取数据
+    if(district.section.length === 0){
+      //该区域不分section
+      promiseArray.push(_this.getCityLoupanLessThanThousand(city, callback, district.districtAlias));
+    }
+    else{
+      //该区域分section
+      district.section.forEach(section => {
+        promiseArray.push(_this.getCityLoupanLessThanThousand(city, callback, section.sectionAlias));
+      });
+    }
+  });
 
+  return Promise.all(promiseArray);
+}
+/**
+ * 获取指定city/district/section新房少于1000时候的所有楼盘信息，每条信息执行一次callback
+ * @param{string} city   指定的城市
+ * @param{function} callback  对每条信息的回调
+ * @param{string} area  指定的district或者section
+ * @return{Promise}
+ * @description  该方法思路：对于每个区域，先获取总数，然后每个分页对应一个promise,每个promise在内部处理失败情况，因而总是会是resolved。
+ *                 该方法使用Promise.all返回单一promise，resolve时候表示获取信息结束。
+ * **/
+async function getCityLoupanLessThanThousand(city, callback=null, area=''){
+  let _this = this;
+  let total;
+  try{
+    total = (await _this.getCityLoupanPerpage(city, 1, area)).data.total;
+  }
+  catch (e){
+    let err = {msg: `获取${city} ${area} 房子总量信息失败`, err: e};
+    logger.error(err);
+    return err;
+  }
+  let promiseArray = [];
+  for(let i=0; i*10<total; i++){
+    let page = i+1;
+    let promise = _this.getCityLoupanPerpage(city, page, area).then(v=>{
+      v.data.list.forEach(data =>{
+        callback && callback(data);
+      });
+    })
+    .catch(err=>{
+      callback && callback(null, {msg: `获取${city} ${area}第${page}页新房数据失败`, error: err, city: city, page: page, area: area});
+      logger.error(err);
+    });
+    promiseArray.push(promise);
+  }
+  return Promise.all(promiseArray);
+}
 
 
 
@@ -566,20 +585,23 @@ function LianjiaCrawler() {
 }
 //获取城市列表
 LianjiaCrawler.prototype.getLianjiaCities = getLianjiaCities;
+
 //新房相关<基础>方法
 LianjiaCrawler.prototype.getCityLoupanTotal = getCityLoupanTotal;
 LianjiaCrawler.prototype.getCityLoupanPerpage = getCityLoupanPerpage;
 LianjiaCrawler.prototype.getDistrictSection = getDistrictSection;
 LianjiaCrawler.prototype.getCityDistrict = getCityDistrict;
+
 //二手房相关<基础>方法
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
 LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
 
-//获取某个城市的新房
+//获取某个城市的新房相关<组合>方法
 LianjiaCrawler.prototype.getLoupanByCity = getLoupanByCity;
-
+LianjiaCrawler.prototype.getCityLoupanLessThanThousand = getCityLoupanLessThanThousand;
+LianjiaCrawler.prototype.getCityLoupanMoreThanThousand = getCityLoupanMoreThanThousand;
 
 
 
