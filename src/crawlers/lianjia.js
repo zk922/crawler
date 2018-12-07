@@ -39,7 +39,7 @@ function getLianjiaCities(){
           })
         });
 
-        // console.log(JSON.stringify(result));
+        // logger.log(JSON.stringify(result));
         done();
         resolve({result: 0, msg: '城市列表获取成功', data: result});
       }
@@ -224,7 +224,7 @@ function getCityDistrict(city) {
           district: []
         };
         itemList.each(function () {
-          // console.log(this);
+          // logger.log(this);
           result.district.push({
             districtName: $(this).text(),
             districtAlias: $(this).attr('data-district-spell')
@@ -312,14 +312,14 @@ function getErshoufangSection(city, district) {
  * 获取某个城市city区域section第i页的房产列表
  * @param {string}city 城市
  * @param {string}section 区域
- * @param {string}page 第i页面
+ * @param {number}page 第i页面
  * @return {Promise}
  * **/
-function getErshoufangSectionList(city, section, page) {
+function getErshoufangPerPage(city, page, section='') {
   let _this = this;
   return new Promise(function (resolve, reject) {
     _this.c.queue({
-      uri: `https://${city}.lianjia.com/ershoufang/${section}/pg${page}`,
+      uri: `https://${city}.lianjia.com/ershoufang${section ? '/'+ section : ''}/pg${page}`,
       callback: function (error, res, done) {
         if(error){
           logger.error(error);
@@ -362,43 +362,75 @@ function getErshoufangDetail(city, id) {
       uri: `https://${city}.lianjia.com/ershoufang/${id}.html`,
       callback: function (error, res, done) {
         if(error){
-          logger.error(error);
+          let e = {msg: `获取${city} 二手房 ${id}的信息失败`, result: 1, data: error};
+          logger.error(e);
           done();
-          reject({msg: `获取${city}  ${id}的信息失败`, result: 1, data: error});
+          reject(e);
           return;
         }
         let $ = res.$;
         let info = {};  //数据对象
-        info.name = $('h1.main').text();  //name
+
+        // name
+        try{
+          info.name = $('h1.main').text();
+        }catch (e) {
+          logger.error({msg: `获取${city}  name失败`, error: e});
+        }
         //总价
-        info.price_total = $('.price .total').text();
-        info.price_total_unit = $('.price .unit span').text();
-        console.log(info.price_total, '   ', info.price_total_unit);
+        try{
+          info.price_total = $('.price .total').text();
+          info.price_total_unit = $('.price .unit span').text();
+        }
+        catch (e) {
+          logger.error({msg: `获取${city} 二手房 ${id}总价失败`, error: e});
+        }
+
         //均价
-        let averagePriceString = $('.unitPriceValue').text();
-        info.price_average = averagePriceString.match(/\d+/)[0];
-        info.price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
-        console.log(info.price_average, '   ', info.price_average_unit);
+        try{
+          let averagePriceString = $('.unitPriceValue').text();
+          info.price_average = averagePriceString.match(/\d+/)[0];
+          info.price_average_unit = averagePriceString.match(/\d+(\D*)/)[1];
+        }
+        catch (e) {
+          logger.error({msg: `获取${city} 二手房 ${id}均价失败`, error: e});
+        }
         //小区
-        let communityEle = $('.communityName a:first-of-type');
-        info.community_name = communityEle.text();
-        info.community_id = communityEle.attr('href').split('/')[2];
-        console.log(info.community_name, '   ', info.community_id);
+        try{
+          let communityEle = $('.communityName a:first-of-type');
+          info.community_name = communityEle.text();
+          info.community_id = communityEle.attr('href').split('/')[2];
+        }
+        catch (e) {
+          logger.error({msg: `获取${city} 二手房 ${id}小区信息失败`, error: e});
+        }
+
         //城区
-        let districtEle = $('.areaName .info a:nth-child(1)');
-        info.district_name = districtEle.text();
-        info.district_alias = districtEle.attr('href').split('/')[2];
-        console.log(info.district_name, '    ', info.district_alias);
+        try{
+          let districtEle = $('.areaName .info a:nth-child(1)');
+          info.district_name = districtEle.text();
+          info.district_alias = districtEle.attr('href').split('/')[2];
+        }
+        catch (e) {
+          logger.error({msg: `获取${city} 二手房 ${id}城区失败`, error: e});
+        }
+
         //地区
-        let sectionEle = $('.areaName .info a:nth-child(2)');
-        info.section_name = sectionEle.text();
-        info.section_alias = sectionEle.attr('href').split('/')[2];
-        console.log(info.section_name, '   ', info.section_alias);
+        try{
+          let sectionEle = $('.areaName .info a:nth-child(2)');
+          info.section_name = sectionEle.text();
+          info.section_alias = sectionEle.attr('href').split('/')[2];
+          logger.log(info.section_name, '   ', info.section_alias);
+        }
+        catch (e) {
+          logger.error({msg: `获取${city} 二手房 ${id}地区信息失败`, error: e});
+        }
+
         //详情信息
         let detailList = $('.introContent ul li');
         detailList.each(function(){
           let str = $(this).text().trim();
-          // console.log(str);
+          // logger.log(str);
           switch (true) {
             case /.*房屋户型.*/.test(str):
               info.house_model = str.replace(/.*房屋户型\s*/, '');
@@ -468,7 +500,7 @@ function getErshoufangDetail(city, id) {
               break;
           }
         });
-        console.log(JSON.stringify(info));
+        logger.log(JSON.stringify(info));
         resolve({result: 0, msg: `获取${city}  ${id}的信息成功`, data: info});
         done();
       }
@@ -575,6 +607,91 @@ async function getCityLoupanLessThanThousand(city, callback=null, area=''){
 }
 
 
+/**
+ * 获取指定city/district/section二手房小于3000时候的所有楼盘信息
+ * @param{string} city   指定的城市
+ * @param{function} callback  对每条信息的回调
+ * @param{string} area  指定的district或者section
+ * @return{Promise}
+ * **/
+async function getCityErshoufangLessThanThreeThousand(city, callback=null, area='') {
+  let _this = this;
+  let total;
+  try{
+    total = (await _this.getErshoufangPerPage(city, 1, area)).data.total;
+  }
+  catch (e) {
+    let err = {msg: `获取${city}的${area}的二手房总数信息失败`, error: e};
+    logger.error(err);
+    return Promise.reject(err);
+  }
+  let promiseArray = [];   //获取每一页二手房信息的promise列表
+  for(let i=0; i*30<total; i++){
+    //遍历获取每一页二手房信息
+    let page = i+1;
+    let promise = _this.getErshoufangPerPage(city, page, area).then(result => {
+      let getPerErshoufangPromiseArray = [];  //获取每个二手房信息的promise
+      result.data.list.forEach(item => {
+        //遍历获取某页中的每一条二手房产信息
+        let p = _this.getErshoufangDetail(city, item.id).then(data=>{
+          callback && callback(data);
+        })
+        .catch(e => {
+          logger.error({msg: `获取${city}的id为${item.id}的二手房数据失败`, error: e});
+        });
+        getPerErshoufangPromiseArray.push(p);
+      });
+      return Promise.all(getPerErshoufangPromiseArray);
+    })
+    .catch(err => {
+      logger.error({msg: `获取${city}的${area}第${page}页的数据失败`, error: err});
+    });
+    promiseArray.push(promise);
+  }
+  return Promise.all(promiseArray);
+}
+
+/**
+ * 获取指定city二手房信息
+ * @param{string} city   指定的城市
+ * @param{function} callback  对每条信息的回调
+ * @return{Promise}
+ * **/
+async function getCityErshoufang(city, callback) {
+  let _this = this;
+  let total;
+  try{
+    total = (_this.getErshoufangPerPage(city, 1)).data.total;
+  }
+  catch (e) {
+    let err = {msg: `获取${city}二手房总数失败`, error: e};
+    logger.error(err);
+    return Promise.reject(err);
+  }
+  logger.log(`-------获取到${city}二手房总数${total}-------`);
+
+  if(total <= 3000){
+    //二手房总数少于3000
+    return _this.getCityErshoufangLessThanThreeThousand(city, callback);
+  }
+  else{
+    //二手房总数超过3000
+
+    //todo 超过3000应该独立出一个方法
+    //todo 1.district 少于3000直接获取
+    //todo 2.district 多于3000分section
+    //todo 3.section 少于3000直接获取
+    //todo 4.section 多于3000，给警告，但还要获取。
+
+
+    //todo 该模块拆分成新房，二手房两个模块
+
+  }
+
+}
+
+
+
 
 /**
  * 导出的链家爬虫类
@@ -595,7 +712,7 @@ LianjiaCrawler.prototype.getCityDistrict = getCityDistrict;
 //二手房相关<基础>方法
 LianjiaCrawler.prototype.getErshoufangDistrict = getErshoufangDistrict;
 LianjiaCrawler.prototype.getErshoufangSection = getErshoufangSection;
-LianjiaCrawler.prototype.getErshoufangSectionList = getErshoufangSectionList;
+LianjiaCrawler.prototype.getErshoufangPerPage = getErshoufangPerPage;
 LianjiaCrawler.prototype.getErshoufangDetail = getErshoufangDetail;
 
 //获取某个城市的新房相关<组合>方法
@@ -603,6 +720,8 @@ LianjiaCrawler.prototype.getLoupanByCity = getLoupanByCity;
 LianjiaCrawler.prototype.getCityLoupanLessThanThousand = getCityLoupanLessThanThousand;
 LianjiaCrawler.prototype.getCityLoupanMoreThanThousand = getCityLoupanMoreThanThousand;
 
-
+//获取某个城市二手房相关<组合>方法
+LianjiaCrawler.prototype.getCityErshoufangLessThanThreeThousand = getCityErshoufangLessThanThreeThousand;
+LianjiaCrawler.prototype.getCityErshoufang = getCityErshoufang;
 
 module.exports = LianjiaCrawler;
