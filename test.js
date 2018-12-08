@@ -17,9 +17,15 @@ let c = new LianjiaCrawler();
 // c.getErshoufangDetail('bj', '101103624977').then(v=>{
 //
 // });
+// let i = 0;
+// c.getLoupanByCity('gz', v=>{
+//   if(v){
+//     i++
+//   }
+// }).then(()=>{console.log(i)});
 let i = 0;
-c.getLoupanByCity('gz', v=>{
+c.getCityErshoufangLessThanThreeThousand('bj', v=>{
   if(v){
     i++
   }
-}).then(()=>{console.log(i)});
+}, 'dongcheng').then(()=>{console.log(i)});
