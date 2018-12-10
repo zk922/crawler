@@ -1,5 +1,5 @@
 const LianjiaCrawler = require('./src/crawlers/lianjia');
-
+const fs = require('fs');
 let c = new LianjiaCrawler();
 
 // c.getErshoufangDistrict('hf').then(v=>{
@@ -23,9 +23,12 @@ let c = new LianjiaCrawler();
 //     i++
 //   }
 // }).then(()=>{console.log(i)});
+let ws = fs.createWriteStream('./gy.log', {flags: 'a'});
 let i = 0;
-c.getCityErshoufangLessThanThreeThousand('bj', v=>{
-  if(v){
-    i++
-  }
-}, 'dongcheng').then(()=>{console.log(i)});
+c.getErshoufangByCity('gy', v=>{
+  ws.write(JSON.stringify(v)+'/n');
+  i++;
+}).then(()=>{
+  ws.end();
+  console.log(i)
+});
